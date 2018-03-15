@@ -7,3 +7,7 @@ You have to download data from https://archive.ics.uci.edu/ml/machine-learning-d
 Next, you have to install requirements from `requirements.txt` and launch jupyter notebook.
 
 There is some commented code and saved models, so if you want to experiment and fit models by yourself feel free to uncomment and experiment with code and parameters.
+
+If you want to make a movie, generate frames and then execute ffmpeg (on ubuntu):
+
+`ffmpeg -framerate 20 -i lstm2d-%03d.png -f mov output.mov`
