@@ -10,4 +10,4 @@ There is some commented code and saved models, so if you want to experiment and 
 
 If you want to make a movie, generate frames and then execute ffmpeg (on ubuntu):
 
-`ffmpeg -framerate 20 -i lstm2d-%03d.png -f mov output.mov`
+`ffmpeg -framerate 10 -i lstm2d-%03d.png -f mov output.mov`
