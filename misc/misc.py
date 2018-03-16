@@ -1,17 +1,10 @@
 import glob
-import keras
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-import pickle
-import shutil
-import sys
-import time
-from collections import Counter
-from keras import optimizers
 from keras.callbacks import ModelCheckpoint, EarlyStopping
-from keras.layers import Dense, LSTM, Dropout, Input, Lambda
+from keras.layers import Dense, LSTM, Input, Lambda
 from keras.models import Model
 from keras.regularizers import l1_l2
 from keras.utils import np_utils
@@ -46,11 +39,9 @@ def load_prepare_data(data_dir, train_size, seed, maxlen=90):
                     lengths.append(array.shape[0])
                     Y.append(class_)
                     X.append(array)
-#    plt.hist(lengths, bins=50)
 
     np.random.seed(seed)
 
-#    max_length = max([x.shape[0] for x in X])
     max_length = maxlen
 
     X_train, X_validation, Y_train, Y_validation = train_test_split(X, Y,
@@ -126,7 +117,7 @@ def prepare_autoencoder_input(act, noise, seed, min_=20, max_=60):
          range(act.shape[0])])
     X_autoencoder = Y_autoencoder + np.random.normal(0, noise,
                                                      Y_autoencoder.shape)
-    new_order = np.array(range(X_autoencoder.shape[0]))
+    new_order = np.arange(X_autoencoder.shape[0])
     np.random.seed(seed)
     np.random.shuffle(new_order)
     X_autoencoder = X_autoencoder[new_order]
@@ -173,19 +164,22 @@ def plot_2D_series(act, set_labels, labels, encoded, ax, c, cmap):
         for i in where:
             enc = encoded.predict(act[i])
             plt.plot(enc[:, 0], enc[:, 1], 'k', alpha=0.1,
-                     linewidth=1.0)  # linewidth=0.5
+                     linewidth=1.0)
             sc = plt.scatter(enc[:, 0], enc[:, 1], c=c, cmap=cmap, s=5,
-                             alpha=0.5)  # s=3
+                             alpha=0.5)
             ax.annotate(l, (enc[-1, 0], enc[-1, 1]))
+
 
 def log_all_1p(a):
     return np.sign(a) * np.log1p(np.abs(a))
 
+
 def plot_2D(set_labels, encoded, act, labels, title, filename, x_l=-1.05,
             x_h=1.05, y_l=-1.05, y_h=1.05, figsize=(15, 12), frac_labels=0.5,
-            linewidth=1, pointsize=5, fontsize=5, linealpha=0.1, min_steps=0, max_steps=90,
-            show=True, maxlen=90, log=False, hand=None, colormap=cm.viridis,
-            scatter=True, colorbar_show=True, last_label=True):
+            linewidth=1, pointsize=5, fontsize=5, linealpha=0.1, min_steps=0,
+            max_steps=90, show=True, maxlen=90, log=False, hand=None,
+            colormap=cm.viridis, scatter=True, colorbar_show=True,
+            last_label=True):
     cmap = colormap
     c = np.linspace(0, maxlen, maxlen)
     fig, ax = plt.subplots(figsize=figsize)
@@ -196,24 +190,25 @@ def plot_2D(set_labels, encoded, act, labels, title, filename, x_l=-1.05,
             enc = encoded.predict(act[i])
             if log:
                 enc = log_all_1p(enc)
-            if type(hand) == type(None):
+            if hand is None:
                 linecolor = 'k'
-            elif hand[i] == True:
+            elif hand[i]:
                 linecolor = 'c'
-            elif hand[i] == False:
+            elif not hand[i]:
                 linecolor = 'm'
 
-            plt.plot(enc[min_steps:max_steps, 0], enc[min_steps:max_steps, 1], linecolor,
-                     alpha=linealpha, linewidth=linewidth)
+            plt.plot(enc[min_steps:max_steps, 0], enc[min_steps:max_steps, 1],
+                     linecolor, alpha=linealpha, linewidth=linewidth)
             if scatter:
-                sc = plt.scatter(enc[min_steps:max_steps, 0], enc[min_steps:max_steps, 1],
-                             c=c[min_steps:max_steps], cmap=cmap, s=pointsize,
-                             alpha=0.5)
+                sc = plt.scatter(enc[min_steps:max_steps, 0],
+                                 enc[min_steps:max_steps, 1],
+                                 c=c[min_steps:max_steps], cmap=cmap,
+                                 s=pointsize,
+                                 alpha=0.5)
             if np.random.uniform() < frac_labels:
                 ax.annotate(l, (enc[-1, 0], enc[-1, 1]), fontsize=fontsize)
         if last_label:
             ax.annotate(l, (enc[-1, 0], enc[-1, 1]), fontsize=fontsize)
-
 
     if colorbar_show:
         norm = matplotlib.colors.Normalize(vmin=0, vmax=maxlen)
@@ -221,11 +216,10 @@ def plot_2D(set_labels, encoded, act, labels, title, filename, x_l=-1.05,
         sm.set_array([])
         fig.colorbar(sm, ticks=range(0, maxlen, 20))
 
-    # plt.colorbar()
     plt.title(title, fontsize=20)
     plt.xlim(x_l, x_h)
     plt.ylim(y_l, y_h)
-    plt.rc('axes', labelsize=16)  
+    plt.rc('axes', labelsize=16)
     fig.savefig(filename, bbox_inches='tight')
     if show:
         plt.show()
@@ -233,25 +227,24 @@ def plot_2D(set_labels, encoded, act, labels, title, filename, x_l=-1.05,
 
 
 def plot_3D(set_labels, encoded, act, labels, title, filename, x_l=-1.05,
-            x_h=1.05, y_l=-1.05, y_h=1.05, figsize=(15, 12), frac_labels=0.5,
-            linewidth=1, pointsize=5, fontsize=5, linealpha=0.1, max_steps=136,
-            show=True, log=False):
+            x_h=1.05, y_l=-1.05, y_h=1.05, figsize=(15, 12), pointsize=5,
+            max_steps=136, show=True, log=False):
     cmap = cm.viridis
     c = np.linspace(0, 90, 90)
     plt.figure(figsize=figsize)
     ax = plt.axes(projection='3d')
 
-
-    for l in set_labels[:]:
+    for l in set_labels:
         where = np.where(labels == l)[0][:]
         for i in where:
             enc = encoded.predict(act[i])
             if log:
                 enc = log_all_1p(enc)
-            x = enc[:max_steps,0], 
-            y = enc[:max_steps,1]
-            z = enc[:max_steps,2]
-            ax.scatter3D(x, y, z, c=c[:max_steps], cmap=cmap, alpha=0.5, s=pointsize);
+            x = enc[:max_steps, 0],
+            y = enc[:max_steps, 1]
+            z = enc[:max_steps, 2]
+            ax.scatter3D(x, y, z, c=c[:max_steps], cmap=cmap, alpha=0.5,
+                         s=pointsize)
 
     plt.title(title, fontsize=20)
     plt.xlim(x_l, x_h)
@@ -262,11 +255,13 @@ def plot_3D(set_labels, encoded, act, labels, title, filename, x_l=-1.05,
         plt.show()
     plt.close("all")
 
-def plot_2D_mislabeled(set_labels, encoded, act, labels, title, filename, mislabel, pairs, x_l=-1.05,
-            x_h=1.05, y_l=-1.05, y_h=1.05, figsize=(15, 12), frac_labels=0.5,
-            linewidth=1, pointsize=5, fontsize=5, linealpha=0.1, max_steps=90,
-            show=True, maxlen=90, log=False, hand=None, colormap=cm.viridis,
-            scatter=True, last_label=True):
+
+def plot_2D_mislabeled(set_labels, encoded, act, labels, title, filename,
+                       mislabel, pairs, x_l=-1.05, x_h=1.05, y_l=-1.05,
+                       y_h=1.05, figsize=(15, 12), frac_labels=0.5, linewidth=1,
+                       pointsize=5, fontsize=5, linealpha=0.1, max_steps=90,
+                       show=True, maxlen=90, log=False, hand=None,
+                       colormap=cm.viridis, scatter=True, last_label=True):
     cmap = colormap
     c = np.linspace(0, maxlen, maxlen)
     fig, ax = plt.subplots(figsize=figsize)
@@ -277,27 +272,28 @@ def plot_2D_mislabeled(set_labels, encoded, act, labels, title, filename, mislab
             enc = encoded.predict(act[i])
             if log:
                 enc = log_all_1p(enc)
-            if type(hand) == type(None):
+            if hand is None:
                 linecolor = 'k'
-            elif hand[i] == True:
+            elif hand[i]:
                 linecolor = 'c'
-            elif hand[i] == False:
+            elif not hand[i]:
                 linecolor = 'm'
 
             plt.plot(enc[:max_steps, 0], enc[:max_steps, 1], linecolor,
                      alpha=linealpha, linewidth=linewidth)
             if scatter:
                 sc = plt.scatter(enc[:max_steps, 0], enc[:max_steps, 1],
-                             c=c[:max_steps], cmap=cmap, s=pointsize,
-                             alpha=0.5)
+                                 c=c[:max_steps], cmap=cmap, s=pointsize,
+                                 alpha=0.5)
             if mislabel[i]:
-                ax.annotate(l, (enc[-1, 0], enc[-1, 1] + 0.05), fontsize=fontsize + 2, color='blue')
-                ax.annotate(pairs[i,0], (enc[-1, 0], enc[-1, 1] - 0.05), fontsize=fontsize + 2, color='red')
+                ax.annotate(l, (enc[-1, 0], enc[-1, 1] + 0.05),
+                            fontsize=fontsize + 2, color='blue')
+                ax.annotate(pairs[i, 0], (enc[-1, 0], enc[-1, 1] - 0.05),
+                            fontsize=fontsize + 2, color='red')
             elif np.random.uniform() < frac_labels:
                 ax.annotate(l, (enc[-1, 0], enc[-1, 1]), fontsize=fontsize)
         if last_label:
             ax.annotate(l, (enc[-1, 0], enc[-1, 1]), fontsize=fontsize)
-
 
     if scatter:
         norm = matplotlib.colors.Normalize(vmin=0, vmax=maxlen)
@@ -305,7 +301,6 @@ def plot_2D_mislabeled(set_labels, encoded, act, labels, title, filename, mislab
         sm.set_array([])
         fig.colorbar(sm, ticks=range(0, maxlen, 20))
 
-    # plt.colorbar()
     plt.title(title, fontsize=20)
     plt.xlim(x_l, x_h)
     plt.ylim(y_l, y_h)
@@ -313,4 +308,3 @@ def plot_2D_mislabeled(set_labels, encoded, act, labels, title, filename, mislab
     if show:
         plt.show()
     plt.close("all")
-
