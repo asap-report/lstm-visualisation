@@ -1,6 +1,6 @@
 # LSTM Visualization
 
-This is a repository to the article: https://medium.com/asap-report/visualizing-lstm-networks-part-i-f1d3fa6aace7
+This is a repository for the article: https://medium.com/asap-report/visualizing-lstm-networks-part-i-f1d3fa6aace7
 We strongly advise to read the article before running the code. The notebook was written in Python 3 and tested on Ubuntu 16.04 (without GPU).
 
 You have to download data from https://archive.ics.uci.edu/ml/machine-learning-databases/auslan2-mld/tctodd.tar.gz and extract it  to `data` directory.
