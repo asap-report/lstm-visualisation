@@ -81,7 +81,7 @@ def prepare_model(n_lstm, metric, X_train, Y_train, kern_reg=(0.01, 0.01),
     output_layer = Dense(Y_train.shape[1], activation='softmax')(
         last_step_layer)
 
-    model = Model(input=input_layer, output=output_layer)
+    model = Model(inputs=input_layer, outputs=output_layer)
     lstm_activations = Model(input_layer, lstm_layer)
     model.compile(loss='categorical_crossentropy', optimizer='adam',
                   metrics=[metric])
