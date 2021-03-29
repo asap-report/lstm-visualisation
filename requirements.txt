@@ -39,7 +39,7 @@ protobuf==3.5.1
 ptyprocess==0.5.2
 pydot==1.2.4
 pyface==5.1.0
-Pygments==2.2.0
+Pygments==2.7.4
 pyparsing==2.2.0
 python-dateutil==2.6.1
 pytz==2017.3
